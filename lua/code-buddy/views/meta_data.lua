@@ -1,4 +1,5 @@
 local lsp_capture = require("code-buddy.capture.lsp")
+local fn_capture = require("code-buddy.capture.function_name")
 local marker = require("code-buddy.capture.marker")
 local injector = require("code-buddy.commentor.injector")
 
@@ -12,7 +13,7 @@ function M.show(bufnr, row, col)
   end
 
   -- Step 1: find enclosing function via documentSymbol
-  lsp_capture.get_enclosing_function(bufnr, row, function(sym)
+  fn_capture.get(bufnr, row, function(sym)
     -- Step 2: gather hover + refs + diagnostics
     local fn_pos, diag_range
     if sym then
