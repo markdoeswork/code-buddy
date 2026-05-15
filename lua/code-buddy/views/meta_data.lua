@@ -6,7 +6,7 @@ local injector = require("code-buddy.commentor.injector")
 local M = {}
 
 function M.show(bufnr, row, col)
-  local marker_row = marker.find(bufnr)
+  local marker_row, marker_flags = marker.find(bufnr)
   if marker_row then
     row = marker_row
     col = 0
@@ -56,6 +56,17 @@ function M.show(bufnr, row, col)
         end
       else
         lines[#lines + 1] = "lsp: not attached"
+      end
+
+      if marker_row and marker_flags.code and sym then
+        local fn_start = sym.range.start.line
+        local fn_end   = sym.range["end"].line
+        local fn_lines = vim.api.nvim_buf_get_lines(bufnr, fn_start, fn_end + 1, false)
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = "code:"
+        for _, l in ipairs(fn_lines) do
+          lines[#lines + 1] = l
+        end
       end
 
       injector.inject(bufnr, row, lines, { label = "meta" })
