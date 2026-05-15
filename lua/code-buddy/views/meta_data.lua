@@ -1,7 +1,8 @@
-local lsp_capture = require("code-buddy.capture.lsp")
-local fn_capture = require("code-buddy.capture.function_name")
-local marker = require("code-buddy.capture.marker")
-local injector = require("code-buddy.commentor.injector")
+local lsp_capture   = require("code-buddy.capture.lsp")
+local fn_capture    = require("code-buddy.capture.function_name")
+local marker        = require("code-buddy.capture.marker")
+local injector      = require("code-buddy.commentor.injector")
+local ai_response   = require("code-buddy.views.ai_response")
 
 local M = {}
 
@@ -58,18 +59,25 @@ function M.show(bufnr, row, col)
         lines[#lines + 1] = "lsp: not attached"
       end
 
-      if marker_row and marker_flags.code and sym then
+      if marker_row and marker_flags["function"] and sym then
         local fn_start = sym.range.start.line
         local fn_end   = sym.range["end"].line
         local fn_lines = vim.api.nvim_buf_get_lines(bufnr, fn_start, fn_end + 1, false)
         lines[#lines + 1] = ""
-        lines[#lines + 1] = "code:"
+        lines[#lines + 1] = "function:"
         for _, l in ipairs(fn_lines) do
           lines[#lines + 1] = l
         end
       end
 
-      injector.inject(bufnr, row, lines, { label = "meta" })
+      if marker_row and marker_flags.ai then
+        -- Get the raw marker line so prompt.build can extract the question
+        local all_lines = vim.api.nvim_buf_get_lines(bufnr, marker_row, marker_row + 1, false)
+        local marker_line = all_lines[1] or ""
+        ai_response.run(bufnr, row, marker_line, lines)
+      else
+        injector.inject(bufnr, row, lines, { label = "meta" })
+      end
     end)
   end)
 end
