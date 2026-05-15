@@ -6,6 +6,7 @@ local M = {}
 local ENDPOINT = "https://api.deepinfra.com/v1/openai/chat/completions"
 local API_KEY  = "VJx0qtJ0Cm9bH09vtHZx3OqIEL3H0Kjr"
 local MODEL    = "Qwen/Qwen3.6-35B-A3B"
+M.MODEL        = MODEL  -- exposed for tombstone metadata
 
 -- callback(ok, text)
 --   ok   = true  → text is the assistant reply string

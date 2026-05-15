@@ -26,4 +26,28 @@ function M.build(marker_line, meta_lines)
   return table.concat(parts, "\n\n")
 end
 
+-- marker_line: the raw --buddy line (for extracting the question)
+-- fn_lines:    table of raw source lines of the function to rewrite
+-- Returns a tight prompt that instructs the LLM to return ONLY the raw updated function.
+function M.build_replace(marker_line, fn_lines)
+  local question = marker_line:match("%-%-buddy%s+(.-)%s*%-%-") or
+                   marker_line:match("%-%-buddy%s+(.+)$") or ""
+  question = question:gsub("^%s+", ""):gsub("%s+$", "")
+
+  return table.concat({
+    "You are a code assistant. Rewrite the following function exactly as instructed.",
+    "Rules:",
+    "- Output ONLY the raw updated function code.",
+    "- Do NOT include markdown fences, backticks, or code blocks.",
+    "- Do NOT include any explanation, comments, or text before or after the function.",
+    "- Preserve the original indentation style exactly.",
+    "- Return the complete function from its first line to its last line.",
+    "",
+    "Instruction: " .. question,
+    "",
+    "Function to rewrite:",
+    table.concat(fn_lines, "\n"),
+  }, "\n")
+end
+
 return M

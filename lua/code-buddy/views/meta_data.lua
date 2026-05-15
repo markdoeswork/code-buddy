@@ -70,11 +70,18 @@ function M.show(bufnr, row, col)
         end
       end
 
-      if marker_row and marker_flags.ai then
-        -- Get the raw marker line so prompt.build can extract the question
+      if marker_row and (marker_flags.ai or marker_flags.replace) then
         local all_lines = vim.api.nvim_buf_get_lines(bufnr, marker_row, marker_row + 1, false)
         local marker_line = all_lines[1] or ""
-        ai_response.run(bufnr, row, marker_line, lines)
+
+        if marker_flags.replace and sym then
+          local fn_start = sym.range.start.line
+          local fn_end   = sym.range["end"].line
+          local fn_lines = vim.api.nvim_buf_get_lines(bufnr, fn_start, fn_end + 1, false)
+          ai_response.run_replace(bufnr, row, marker_line, sym, fn_lines)
+        else
+          ai_response.run(bufnr, row, marker_line, lines)
+        end
       else
         injector.inject(bufnr, row, lines, { label = "meta" })
       end
