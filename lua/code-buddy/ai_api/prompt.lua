@@ -35,9 +35,10 @@ function M.build_replace(marker_line, fn_lines)
   question = question:gsub("^%s+", ""):gsub("%s+$", "")
 
   return table.concat({
-    "You are a code assistant. Rewrite the following function exactly as instructed.",
+    "You are a code assistant. Output ONLY what is asked. No thinking, no explanations.",
     "Rules:",
     "- Output ONLY the raw updated function code.",
+    "- Do NOT output any reasoning, thinking, or <think> blocks.",
     "- Do NOT include markdown fences, backticks, or code blocks.",
     "- Do NOT include any explanation, comments, or text before or after the function.",
     "- Preserve the original indentation style exactly.",

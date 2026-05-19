@@ -4,7 +4,7 @@
 --   3. Call the API
 --   4. Stop spinner, inject AI reply as comments
 
-local api       = require("code-buddy.ai_api.api")
+local api = require("code-buddy.ai_api.api")
 local prompt    = require("code-buddy.ai_api.prompt")
 local loading   = require("code-buddy.views.virtual_text.loading")
 local injector  = require("code-buddy.commentor.injector")
@@ -42,6 +42,7 @@ end
 function M.run_replace(bufnr, row, marker_line, sym, fn_lines)
   local prompt_text = prompt.build_replace(marker_line, fn_lines)
 
+  local start_time = os.date("%H:%M:%S")
   loading.start(bufnr, row)
 
   api.chat(prompt_text, function(ok, text)
@@ -61,7 +62,12 @@ function M.run_replace(bufnr, row, marker_line, sym, fn_lines)
     -- Clear injected blocks first so sym.range line numbers match the original buffer
     injector.clear(bufnr)
     replacer.replace(bufnr, sym, new_lines)
-    tombstone.inject(bufnr, marker_line, sym, new_lines, api.MODEL)
+    tombstone.inject(bufnr, marker_line, sym, new_lines, api.MODEL, start_time)
+
+    -- Re-indent the whole replaced range (function + tombstone) using buffer indent rules
+    local s = sym.range.start.line + 1  -- 1-indexed
+    local e = sym.range.start.line + #new_lines + 2  -- +2 for the two tombstone lines
+    vim.cmd(s .. "," .. e .. "normal! ==")
   end)
 end
 

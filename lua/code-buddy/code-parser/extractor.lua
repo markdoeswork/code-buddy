@@ -1,7 +1,16 @@
 -- Cleans raw LLM response text into a table of code lines.
--- Handles Qwen3 <think> blocks, markdown fences, and blank line trimming.
+-- Handles <think> blocks, markdown fences, and blank line trimming.
 
 local M = {}
+
+local function sanitize(text)
+  local sentinel = "\1NEWLINE\1"
+  text = text:gsub("\n", sentinel)
+  text = text:gsub("<think>.-</think>" .. sentinel .. "?", "")
+  text = text:gsub(sentinel, "\n")
+  text = text:gsub("<think>", ""):gsub("</think>", "")
+  return text
+end
 
 local function trim_blank_lines(lines)
   local first, last = 1, #lines
@@ -16,10 +25,7 @@ end
 -- Fallback: if nothing usable is found, returns { response_text } so the
 -- caller can detect failure rather than silently deleting the function.
 function M.extract(response_text)
-  local text = response_text
-
-  -- Strip Qwen3 chain-of-thought block (emitted before the actual answer)
-  text = text:gsub("<think>.-</think>%s*", "")
+  local text = sanitize(response_text)
 
   -- Extract content from a fenced code block if present
   local fenced = text:match("```[^\n]*\n(.-)\n```")
@@ -27,8 +33,14 @@ function M.extract(response_text)
     text = fenced
   end
 
-  local lines = vim.split(text, "\n", { plain = true })
-  local result = trim_blank_lines(lines)
+  local raw = vim.split(text, "\n", { plain = true })
+  local stripped = {}
+  for _, l in ipairs(raw) do
+    if not l:find("--buddy", 1, true) then
+      stripped[#stripped + 1] = l
+    end
+  end
+  local result = trim_blank_lines(stripped)
 
   if #result == 0 then
     return { response_text }

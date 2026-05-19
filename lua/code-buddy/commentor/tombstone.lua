@@ -34,23 +34,23 @@ end
 -- sym:         LSP symbol (used to locate insertion point after replacement)
 -- new_lines:   the lines written by replacer (to calculate new end row)
 -- model:       model name string
-function M.inject(bufnr, marker_line, sym, new_lines, model)
+-- start_time:  HH:MM string captured before the API call
+function M.inject(bufnr, marker_line, sym, new_lines, model, start_time)
   if buddy_still_present(bufnr) then return end
 
-  local question  = extract_question(marker_line)
-  local timestamp = os.date("%Y-%m-%d %H:%M")
-  local prefix    = lang.get_comment_prefix(bufnr)
+  local question   = extract_question(marker_line)
+  local done_time  = os.date("%Y-%m-%d %H:%M:%S")
+  local prefix     = lang.get_comment_prefix(bufnr)
 
   -- Insert one line above the closing line of the replaced function
   local insert_row = fn_end_row(sym, new_lines)
 
-  local parts = { "--done" }
-  if question ~= "" then parts[#parts + 1] = question end
-  parts[#parts + 1] = timestamp
-  parts[#parts + 1] = model
+  local line1_parts = { "--done" }
+  if question ~= "" then line1_parts[#line1_parts + 1] = question end
+  local line1 = prefix .. table.concat(line1_parts, "  |  ")
+  local line2 = prefix .. start_time .. " → " .. done_time .. "  |  " .. model
 
-  local line = prefix .. table.concat(parts, "  |  ")
-  vim.api.nvim_buf_set_lines(bufnr, insert_row, insert_row, false, { line })
+  vim.api.nvim_buf_set_lines(bufnr, insert_row, insert_row, false, { line1, line2 })
 end
 
 return M
